@@ -252,7 +252,10 @@ Apple silicon and Intel Macs run the native worker. The engine is built with
 both a CPU backend and a Metal backend, and `ECC_BACKEND=auto` picks Metal
 when the engine sees a Metal device. This needs the Xcode command line tools
 (`xcode-select --install`) and Python 3.10+ from python.org or Homebrew; the
-`/usr/bin/python3` that ships with macOS can be older.
+`/usr/bin/python3` that ships with macOS can be older. When the default
+`python3` is too old, the installers use the first newer interpreter named
+`python3.14` to `python3.10` on `PATH`, so install Python 3.10+ before running
+them or set `PYTHON` to the interpreter you want.
 
 ```sh
 git clone https://github.com/isogeny-labs/ecc-challenges && cd ecc-challenges
@@ -260,6 +263,14 @@ deploy/native/install.sh --prefix "$HOME/.local/ecc-challenges"
 ECC_CAMPAIGN=eccp-131 ECC_STATE_DIR="$HOME/ecc-data/eccp-131" \
   ECC_API_KEY_FILE="$HOME/.config/ecc-challenges/api-key" \
   "$HOME/.local/ecc-challenges/bin/ecc-worker"
+```
+
+To choose an interpreter explicitly, including one that Homebrew installed but
+did not link as `python3`:
+
+```sh
+PYTHON="$(brew --prefix python)/bin/python3" \
+  deploy/native/install.sh --prefix "$HOME/.local/ecc-challenges"
 ```
 
 The installer prints the engine's `--probe` report, which lists the Metal
