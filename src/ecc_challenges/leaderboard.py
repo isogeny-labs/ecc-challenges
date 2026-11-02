@@ -50,21 +50,9 @@ def counts_toward_leaderboard(challenge: str) -> bool:
     return challenge_row is not None and not challenge_row.solved_in_2009
 
 
-def rank(accounts: dict[int, dict], sigma_rows, generic_rows, limit: int = LIMIT) -> dict:
-    """Combine per-run work into a ranked table; pure so it can be tested directly.
-
-    accounts maps account id to {"login", "visible", "suspended"}. sigma_rows
-    hold (account_id, dp_weight, points, runs, last_seen_at) for protocol 1;
-    generic_rows hold (account_id, challenge, dp_bits, points, runs, last_seen_at).
-    """
-    work: dict[int, Contribution] = {}
-    for account_id, weight, points, runs, seen in sigma_rows:
-        work.setdefault(account_id, Contribution()).add(
-            CAMPAIGN, int(points), 2.0 ** -sigma_dp_log2(int(weight)), int(runs), seen)
-    for account_id, challenge, dp_bits, points, runs, seen in generic_rows:
-        if counts_toward_leaderboard(challenge):
-            work.setdefault(account_id, Contribution()).add(
-                challenge, int(points), 2.0 ** int(dp_bits), int(runs), seen)
+def _table(work: dict[int, Contribution], accounts: dict[int, dict],
+           limit: int = LIMIT) -> dict:
+    """Rank one work map, naming only accounts that opted in."""
     named, hidden = [], Contribution()
     hidden_accounts = 0
     for account_id, total in work.items():
@@ -96,6 +84,50 @@ def rank(accounts: dict[int, dict], sigma_rows, generic_rows, limit: int = LIMIT
                    "points": hidden.points},
         "total_operations_log2": round(log2(every), 2) if every else None,
     }
+
+
+def rank(accounts: dict[int, dict], sigma_rows, generic_rows, limit: int = LIMIT) -> dict:
+    """Combine per-run work into ranked tables; pure so it can be tested directly.
+
+    accounts maps account id to {"login", "visible", "suspended"}. sigma_rows
+    hold (account_id, dp_weight, points, runs, last_seen_at) for protocol 1;
+    generic_rows hold (account_id, challenge, dp_bits, points, runs, last_seen_at).
+
+    The overall table is in the returned mapping. ``challenges`` maps each
+    challenge with work to its own table, in catalog order.
+    """
+    overall: dict[int, Contribution] = {}
+    by_challenge: dict[str, dict[int, Contribution]] = {}
+
+    def add(work: dict[int, Contribution], account_id: int, challenge: str,
+            points: int, steps_per_point: float, runs: int, seen) -> None:
+        work.setdefault(account_id, Contribution()).add(
+            challenge, points, steps_per_point, runs, seen)
+
+    for account_id, weight, points, runs, seen in sigma_rows:
+        steps = 2.0 ** -sigma_dp_log2(int(weight))
+        add(overall, account_id, CAMPAIGN, int(points), steps, int(runs), seen)
+        add(by_challenge.setdefault(CAMPAIGN, {}), account_id, CAMPAIGN, int(points), steps, int(runs), seen)
+    for account_id, challenge, dp_bits, points, runs, seen in generic_rows:
+        if counts_toward_leaderboard(challenge):
+            steps = 2.0 ** int(dp_bits)
+            add(overall, account_id, challenge, int(points), steps, int(runs), seen)
+            add(by_challenge.setdefault(challenge, {}), account_id, challenge, int(points), steps, int(runs), seen)
+    result = _table(overall, accounts, limit)
+    challenge_tables = {}
+    for challenge, work in sorted(
+            by_challenge.items(),
+            key=lambda item: (BY_ID[item[0]].field_bits, BY_ID[item[0]].family_order)):
+        table = _table(work, accounts, limit)
+        if table["named_total"] or table["hidden"]["accounts"]:
+            challenge_tables[challenge] = {
+                "id": challenge,
+                "name": BY_ID[challenge].public()["name"],
+                "field_bits": BY_ID[challenge].field_bits,
+                **table,
+            }
+    result["challenges"] = challenge_tables
+    return result
 
 
 class LeaderboardReader:

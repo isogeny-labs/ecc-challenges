@@ -23,6 +23,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from starlette.middleware.sessions import SessionMiddleware
 
 from .db import Database
+from .account_api import create_router as create_account_router
 from .catalog import BY_ID, CHALLENGES, SOURCE_DATE, SOURCE_URL
 from .multicurve.instances import get_instance
 from .protocol import (CAMPAIGN, WALK_ID, DP_WEIGHT, DP_WEIGHTS, RECOMMENDED_DP_WEIGHT,
@@ -203,6 +204,8 @@ def create_app(settings: Settings | None = None, *, db=None, storage=None) -> Fa
     app = FastAPI(title="ECC Challenges", docs_url=None, redoc_url=None, lifespan=lifespan)
     app.include_router(create_results_router(TEMPLATES))
     app.include_router(create_pages_router(TEMPLATES))
+    app.include_router(create_account_router(service, leaderboard_reader,
+                                             multicurve_enabled=multicurve_enabled))
     app.add_middleware(SessionMiddleware, secret_key=settings.session_secret,
                        session_cookie="ecc_session", https_only=True, same_site="lax", max_age=86400)
     app.state.service = service
@@ -323,8 +326,10 @@ def create_app(settings: Settings | None = None, *, db=None, storage=None) -> Fa
             LOG.exception("leaderboard failed")
             board = None
         return TEMPLATES.TemplateResponse(request, "leaderboard.html",
-                                          {"board": board, "names": {challenge.id: challenge.public()["name"]
-                                                                     for challenge in CHALLENGES}},
+                                          {"board": board,
+                                           "names": {challenge.id: challenge.public()["name"]
+                                                     for challenge in CHALLENGES},
+                                           "open_total": sum(not c.solved_in_2009 for c in CHALLENGES)},
                                           headers={"Cache-Control": "public, max-age=60"})
 
     @app.get("/pollard-rho", response_class=HTMLResponse)

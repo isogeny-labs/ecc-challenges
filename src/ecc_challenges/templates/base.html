@@ -87,10 +87,11 @@
     .button.ghost{background:transparent;color:var(--ink);border-color:var(--line)}
     .button.ghost:hover{border-color:var(--ink);filter:none}
     .button.small{padding:7px 12px;font-size:.88rem}
-    .button.danger{background:transparent;color:var(--accent);border-color:var(--line);padding:5px 10px;font-size:.84rem}
+    .button.danger{background:transparent;color:var(--danger);border-color:currentColor;padding:5px 10px;font-size:.84rem}
+    .button.danger:hover{border-color:var(--danger);filter:none}
     .actions{display:flex;flex-wrap:wrap;gap:12px;margin:28px 0 0}
 
-    .page-shortcuts{flex-wrap:wrap;gap:8px 20px;margin:24px 0;padding:12px 0;border-block:1px solid var(--line)}
+    .page-shortcuts{display:flex;flex-wrap:wrap;gap:8px 20px;margin:24px 0;padding:12px 0;border-block:1px solid var(--line)}
     .page-shortcuts a{padding:4px 0;color:var(--accent)}
     [id]{scroll-margin-top:24px}
 
@@ -228,6 +229,13 @@
     .done{display:inline-flex;align-items:center;gap:6px;color:var(--ok);font-weight:600;white-space:nowrap}
     .done svg{width:14px;height:14px;flex:none}
     .table-note{font-size:.84rem;color:var(--faint);margin-top:10px}
+    .board-index{list-style:none;display:flex;flex-wrap:wrap;gap:8px 18px;padding:0;margin:0 0 8px;font-size:.92rem}
+    .board-index li{display:inline-flex;align-items:baseline;gap:6px}
+    .board-index li span{font-size:.8rem}
+    .challenge-board{margin-top:36px;padding-top:28px;border-top:1px solid var(--line)}
+    .challenge-board .section-head{margin-bottom:14px}
+    .challenge-board h3{margin:0}
+    .challenge-board .section-head p{margin:4px 0 0}
     .result-values{table-layout:fixed}
     .result-values th{width:30%;white-space:normal;letter-spacing:0;text-transform:none;vertical-align:top}
     .result-values td{white-space:normal;overflow-wrap:anywhere;vertical-align:top}
@@ -401,7 +409,7 @@
         <a href="/docs/agents">Set up with an agent</a>
         <a href="/pollard-rho"{% if request.url.path == '/pollard-rho' %} aria-current="page"{% endif %}>Pollard rho</a>
         <a href="/status"{% if request.url.path == '/status' %} aria-current="page"{% endif %}>Status</a>
-      <a href="/leaderboard"{% if request.url.path == '/leaderboard' %} aria-current="page"{% endif %}>Leaderboard</a>
+        <a href="/leaderboard"{% if request.url.path == '/leaderboard' %} aria-current="page"{% endif %}>Leaderboard</a>
         <a href="/docs"{% if request.url.path.startswith('/docs') %} aria-current="page"{% endif %}>Docs</a>
         {% if signed_in_nav %}<a class="button small" href="/dashboard">Dashboard</a>{% else %}<a class="button small" href="/auth/github">Sign in with GitHub</a>{% endif %}
       </nav>

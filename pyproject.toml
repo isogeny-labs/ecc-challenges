@@ -18,6 +18,9 @@ dependencies = [
   "itsdangerous>=2.2,<3",
 ]
 
+[project.scripts]
+ecc = "ecc_challenges.cli:main"
+
 [project.optional-dependencies]
 test = ["pytest>=8,<10", "httpx>=0.27,<1", "moto[s3,sqs]>=5,<6", "markdown-it-py==4.2.0"]
 
