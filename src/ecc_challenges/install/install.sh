@@ -31,9 +31,21 @@ if [ -r /dev/tty ] && [ -w /dev/tty ] && (: </dev/tty) 2>/dev/null; then tty=yes
 missing=
 command -v curl >/dev/null 2>&1 || missing="$missing curl"
 command -v tar >/dev/null 2>&1 || missing="$missing tar"
-python=${PYTHON:-$(command -v python3 || true)}
-if [ -z "$python" ] || ! "$python" -c 'import sys; sys.exit(sys.version_info < (3, 10))' 2>/dev/null; then
-  missing="$missing python3>=3.10"
+have_python() {
+  "$1" -c 'import sys; sys.exit(sys.version_info < (3, 10))' >/dev/null 2>&1
+}
+python=${PYTHON:-}
+if [ -n "$python" ]; then
+  have_python "$python" || missing="$missing python3>=3.10"
+else
+  for candidate in python3 python3.14 python3.13 python3.12 python3.11 python3.10; do
+    path=$(command -v "$candidate" 2>/dev/null || true)
+    if [ -n "$path" ] && have_python "$path"; then
+      python=$path
+      break
+    fi
+  done
+  [ -n "$python" ] || missing="$missing python3>=3.10"
 fi
 command -v g++ >/dev/null 2>&1 || command -v clang++ >/dev/null 2>&1 || missing="$missing c++-compiler"
 if [ -n "$missing" ]; then
@@ -47,7 +59,7 @@ if [ -n "$missing" ]; then
        fi ;;
   esac
   if [ -n "$python" ] && "$python" -V >/dev/null 2>&1; then
-    echo "$python is $("$python" -V 2>&1); install python3.12 (or 3.10+) and set PYTHON=/path/to/it" >&2
+    echo "$python is $("$python" -V 2>&1); install Python 3.10+ and set PYTHON=/path/to/it" >&2
   fi
   echo "then run this command again" >&2
   exit 1
