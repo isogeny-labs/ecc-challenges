@@ -3,20 +3,24 @@ name: CI
 # Superseded pull-request pushes are cancelled; every merge to main runs to the
 # end so main's history shows a result for each commit.
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 on:
   pull_request:
+    branches: [main]
   push:
     branches: [main]
+  merge_group:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
   integration:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     services:
       postgres:
         image: postgres:16
@@ -33,8 +37,8 @@ jobs:
     env:
       TEST_POSTGRES_DSN: postgresql://postgres:postgres@127.0.0.1:5432/postgres
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
           cache: pip
@@ -42,19 +46,21 @@ jobs:
       - run: python -m pytest -q
 
   templates:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.12'
       - run: python -m pip install 'cfn-lint>=1,<2'
       - run: cfn-lint infra/foundation.yaml infra/data.yaml infra/service.yaml infra/build.yaml infra/registry.yaml infra/contributor-canary.yaml
 
   images:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker build -f Dockerfile.web -t ecc-challenges-web:ci .
       - run: docker build -f Dockerfile.admin -t ecc-challenges-admin:ci .
       - run: docker build -f Dockerfile.audit -t ecc-challenges-audit:ci .
@@ -71,19 +77,42 @@ jobs:
 
   cpu-arm64-image:
     runs-on: ubuntu-22.04-arm
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - run: docker build -f worker/Dockerfile.cpu -t ecc-challenges-worker-cpu:ci .
       - name: Check all 24 curves in the final ARM64 image
         run: docker run --rm --network none -e ECC_BACKEND=cpu ecc-challenges-worker-cpu:ci --check
 
   deploy:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Install kubeconform
         run: |
           curl -sSLo /tmp/kubeconform.tgz https://github.com/yannh/kubeconform/releases/download/v0.7.0/kubeconform-linux-amd64.tar.gz
           echo "c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3  /tmp/kubeconform.tgz" | sha256sum -c
           sudo tar -xzf /tmp/kubeconform.tgz -C /usr/local/bin kubeconform
       - run: scripts/check_deploy.sh
+
+  check:
+    name: check
+    if: ${{ always() }}
+    needs: [integration, templates, images, cpu-arm64-image, deploy]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every CI job to pass
+        env:
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+          TEMPLATES_RESULT: ${{ needs.templates.result }}
+          IMAGES_RESULT: ${{ needs.images.result }}
+          ARM64_RESULT: ${{ needs.cpu-arm64-image.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        run: |
+          test "$INTEGRATION_RESULT" = success
+          test "$TEMPLATES_RESULT" = success
+          test "$IMAGES_RESULT" = success
+          test "$ARM64_RESULT" = success
+          test "$DEPLOY_RESULT" = success
