@@ -78,4 +78,5 @@ quickest way to try a gateway or worker change end to end.
 If you find a way to forge accepted work, read other contributors' data or
 get around key revocation, do not open a public issue. Use
 [GitHub private vulnerability reporting](https://github.com/isogeny-labs/ecc-challenges/security/advisories/new)
-instead.
+instead. [SECURITY.md](SECURITY.md) has the full policy, including how to
+report abuse of the service.
