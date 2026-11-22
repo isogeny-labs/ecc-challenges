@@ -52,6 +52,31 @@ def test_hidden_accounts_are_only_counted_in_the_aggregate():
     assert "secret" not in repr(board)
 
 
+def test_rank_builds_one_table_per_challenge_in_catalog_order():
+    people = accounts(alice=True, bob=True, carol=False)
+    board = rank(people, [], [
+        (1, "eccp-131", 20, 10, 1, NOW),
+        (2, "eccp-131", 20, 4, 1, NOW),
+        (2, "ecc2-131", 20, 100, 1, NOW),
+        (1, "ecc2-79", 16, 1000, 1, NOW),
+        (3, "eccp-131", 20, 3, 1, NOW),
+    ])
+    # Same 131-bit field: the random binary curve precedes the prime curve.
+    # The solved 79-bit challenge is left out.
+    assert list(board["challenges"]) == ["ecc2-131", "eccp-131"]
+    prime = board["challenges"]["eccp-131"]
+    assert [row["login"] for row in prime["entries"]] == ["alice", "bob"]
+    assert [row["points"] for row in prime["entries"]] == [10, 4]
+    assert prime["hidden"] == {"accounts": 1, "operations_log2": round(log2(3 * 2 ** 20), 2),
+                               "points": 3}
+    binary = board["challenges"]["ecc2-131"]
+    assert [row["login"] for row in binary["entries"]] == ["bob"]
+    assert binary["entries"][0]["points"] == 100
+    assert binary["hidden"]["accounts"] == 0
+    # The overall order can differ from a single curve's order.
+    assert [row["login"] for row in board["entries"]] == ["bob", "alice"]
+
+
 def test_leaderboard_against_postgres(database, aws_resources, settings):
     from ecc_challenges.app import create_app
     from ecc_challenges.service import Service
@@ -84,6 +109,8 @@ def test_leaderboard_against_postgres(database, aws_resources, settings):
     assert [(entry["login"], entry["points"]) for entry in board["entries"]] == [("listed-high", 40),
                                                                                 ("listed-low", 7)]
     assert board["hidden"]["accounts"] == 1 and board["hidden"]["points"] == 20
+    assert [row["login"] for row in board["challenges"]["ecc2k-130"]["entries"]] == ["listed-high",
+                                                                                    "listed-low"]
 
     client = TestClient(create_app(settings, db=database, storage=aws_resources[0]))
     page = client.get("/leaderboard")
@@ -92,6 +119,8 @@ def test_leaderboard_against_postgres(database, aws_resources, settings):
     assert "hidden-person" not in page.text and "suspended-run" not in page.text
     assert "1 contributor not listed" in page.text
     assert page.text.index("listed-high") < page.text.index("listed-low")
+    assert 'id="by-challenge"' in page.text and 'id="challenge-ecc2k-130"' in page.text
+    assert "ECC2K-130" in page.text and "Challenge page" in page.text
 
     service.set_leaderboard_visible(11, False)
     assert service.leaderboard_visible(11) is False

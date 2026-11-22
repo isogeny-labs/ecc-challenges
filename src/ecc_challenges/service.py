@@ -47,6 +47,19 @@ class Service:
             """, (account_id,)).fetchone()
         return None if row is None else row["visible"]
 
+    def account_identity(self, account_id: int) -> dict:
+        with self.db.connection() as conn:
+            row = conn.execute("""
+                SELECT a.github_id, a.login, a.suspended_at,
+                       (to_jsonb(a)->>'leaderboard_visible')::boolean AS leaderboard_visible
+                FROM ecc_public.accounts a WHERE a.github_id=%s
+            """, (account_id,)).fetchone()
+        if not row:
+            raise Rejected(404, "account not found")
+        return {"github_id": row["github_id"], "login": row["login"],
+                "suspended": row["suspended_at"] is not None,
+                "leaderboard_visible": row["leaderboard_visible"]}
+
     def set_leaderboard_visible(self, account_id: int, visible: bool) -> None:
         if self.leaderboard_visible(account_id) is None:
             raise Rejected(503, "leaderboard settings are not available yet")

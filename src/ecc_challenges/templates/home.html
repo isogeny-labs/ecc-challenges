@@ -50,7 +50,6 @@
 
 <section class="section two" id="method">
   <div>
-    <div class="kicker">The method</div>
     <h2>How the search works</h2>
     <p>Each challenge gives a curve, a base point G and a target point Q. The goal is the integer d with Q = dG. The Pollard rho method takes a pseudo-random walk on the curve where every point is a known combination aG + bQ. When two walks reach the same point, the two combinations give d.</p>
     <p>Storing every step is impossible, so workers report only <em>distinguished points</em>: points with a rare property that is cheap to test, such as a low Hamming weight on ECC2K-130. Two walks that meet stay together and reach the same next distinguished point, so the server only has to compare those.</p>
@@ -102,7 +101,6 @@
 
 <section class="section two" id="code">
   <div>
-    <div class="kicker">Open source</div>
     <h2>Work on the code</h2>
     <p>The website, worker, verifier and infrastructure are in one public repository. Faster kernels, independent checks of the verifier and reviews of the protocol are all useful.</p>
     <div class="actions"><a class="button ghost" href="/docs/project">Project overview</a></div>

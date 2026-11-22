@@ -24,8 +24,8 @@ DOCUMENTS = {
     "CONTRIBUTING.md": "contributing",
     "skills/ecc-challenges-worker/references/prerequisites.md": "worker-prerequisites",
     **{f"docs/{name}.md": name for name in (
-        "running-a-worker", "agents", "modal-workers", "sandbox-runtimes", "local-stack", "campaigns",
-        "admission-and-capacity", "multicurve-storage", "negation-walk", "operations",
+        "running-a-worker", "agents", "cli", "modal-workers", "sandbox-runtimes", "local-stack",
+        "campaigns", "admission-and-capacity", "multicurve-storage", "negation-walk", "operations",
     )},
     "problems/README.md": "problems",
     "problems/dp32-verifier-and-ingest-capacity.md": "problems/dp32-verifier-and-ingest-capacity",

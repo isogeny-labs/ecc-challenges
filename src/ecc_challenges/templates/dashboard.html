@@ -6,7 +6,7 @@
 {# An account with nothing running sees the three setup steps first; one with runs sees them last. #}
 {% set setup_first = not keys or (activity is not none and activity.total_runs == 0) %}
 <div class="page-head">
-  <div><h1>Your workers</h1><p class="lead">{% if setup_first %}Three steps: create a key, start a worker on your machine, then watch it report here.{% else %}Your runs, API keys and the commands to start another worker.{% endif %}</p></div>
+  <div><h1>Your account</h1><p class="lead">{% if setup_first %}Three steps: create a key, start a worker on your machine, then watch it report here.{% else %}Your runs, API keys and the commands to start another worker.{% endif %}</p></div>
   <form method="post" action="/logout"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="button ghost small" type="submit">Sign out {{ login }}</button></form>
 </div>
 

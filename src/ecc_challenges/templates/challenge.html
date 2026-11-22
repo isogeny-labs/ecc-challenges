@@ -50,6 +50,7 @@
   <p class="muted">The worker dashboard gives the command to run and an API key to contribute distinguished points for this challenge.</p>
   {% if challenge.id == "ecc2k-130" %}<p class="muted">The NVIDIA GPU worker reports distinguished points (DPs) by Hamming weight. DP34 is recommended for new workers and preselected on the dashboard; DP32 and DP30 are also accepted. All three thresholds can match points from the earlier DP30 and DP32 archive.</p>{% endif %}
   <a class="button" href="{% if request.session.get('github_id') %}/dashboard?campaign={{ challenge.id }}{% else %}/auth/github?campaign={{ challenge.id }}{% endif %}">{% if request.session.get('github_id') %}Open worker dashboard{% else %}Sign in with GitHub{% endif %}</a>
+  {% if status and status.received_points %}<p class="note gap-top"><a href="/leaderboard#challenge-{{ challenge.id }}">Contributors on {{ challenge_name }}</a></p>{% endif %}
 </div>
 {% endif %}
 

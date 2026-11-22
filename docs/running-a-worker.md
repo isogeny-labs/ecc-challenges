@@ -60,6 +60,10 @@ and print the command that starts the worker again. They wrap the
    (umask 077; cat > ~/.config/ecc-challenges/api-key)   # paste, then Ctrl-D
    ```
 
+   Once a key exists, the `ecc` command can create and revoke keys, list runs
+   and change the leaderboard listing from a terminal; see
+   [command line](cli.md).
+
 2. Pick a curve from the catalog, for example `eccp-131` or `ecc2-131`.
 
 3. Know the rules every recipe follows:

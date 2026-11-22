@@ -28,6 +28,9 @@ between any two walks.
    dashboard with its heartbeat, uploads and verification state, and in the
    active count on the [status page](https://ecc-challenges.com/status).
 
+Keys, runs and the leaderboard listing can also be managed from a terminal
+with the [`ecc` command](docs/cli.md).
+
 [Running a worker](docs/running-a-worker.md) has the full recipes: Docker,
 Compose, Kubernetes, systemd, Podman, Slurm/Apptainer, Modal, macOS and
 Windows, on GPU (CUDA, Metal) or CPU (x86-64 and arm64). A coding agent can do
