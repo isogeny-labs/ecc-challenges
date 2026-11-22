@@ -147,10 +147,13 @@ python3 -c 'import sys; assert sys.version_info >= (3, 10), sys.version; print(s
 clang++ --version
 ```
 
-Pass `PYTHON=/absolute/path/to/python3` to the worker installer if the shell
-still selects an older Python. Run the native worker's Metal check on this
-machine before choosing Metal for an ongoing run. If the user wants CPU
-containers on macOS, install
+The worker installers use the first `python3.14` to `python3.10` on `PATH` when
+the default `python3` is older than 3.10, so the version check above is enough
+to know whether a usable interpreter exists. Pass
+`PYTHON=/absolute/path/to/python3` to choose a specific interpreter, including
+Homebrew's `$(brew --prefix python)/bin/python3`. Run the native worker's Metal
+check on this machine before choosing Metal for an ongoing run. If the user
+wants CPU containers on macOS, install
 [Docker Desktop](https://docs.docker.com/desktop/setup/install/mac-install/),
 finish its first launch, start the Engine and verify `docker version`.
 

@@ -33,10 +33,30 @@ cxx=${CXX:-$(command -v g++ || command -v clang++ || true)}
 [ "$os" = Darwin ] && cxx=${CXX:-$(command -v clang++ || true)}
 [ -n "$cxx" ] || { echo "need g++ or clang++ (on macOS: xcode-select --install)" >&2; exit 1; }
 # The wrapper runs this exact interpreter: launchd and systemd do not use the
-# login PATH, and macOS's /usr/bin/python3 can be older than 3.10.
-python=${PYTHON:-$(command -v python3 || true)}
-if [ -z "$python" ] || ! "$python" -c 'import sys; sys.exit(sys.version_info < (3, 10))'; then
-  echo "need python3 3.10 or newer (set PYTHON to choose one)" >&2; exit 1
+# login PATH, and macOS's /usr/bin/python3 can be older than 3.10. When the
+# default python3 is too old, use the first newer version named on PATH.
+have_python() {
+  "$1" -c 'import sys; sys.exit(sys.version_info < (3, 10))' >/dev/null 2>&1
+}
+if [ -n "${PYTHON:-}" ]; then
+  python=$PYTHON
+  if ! have_python "$python"; then
+    echo "PYTHON=$python is $("$python" -V 2>&1 || echo 'not runnable'); need Python 3.10+" >&2
+    exit 1
+  fi
+else
+  python=
+  for candidate in python3 python3.14 python3.13 python3.12 python3.11 python3.10; do
+    path=$(command -v "$candidate" 2>/dev/null || true)
+    if [ -n "$path" ] && have_python "$path"; then
+      python=$path
+      break
+    fi
+  done
+  if [ -z "$python" ]; then
+    echo "need python3 3.10 or newer; install one (macOS: brew install python), or set PYTHON to its path" >&2
+    exit 1
+  fi
 fi
 python=$("$python" -c 'import sys; print(sys.executable)')
 

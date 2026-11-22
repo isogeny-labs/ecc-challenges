@@ -56,6 +56,14 @@ jobs:
       - run: python -m pip install 'pytest>=8,<10'
       - name: Native installer (no CMake)
         run: sh deploy/native/install.sh --prefix "$RUNNER_TEMP/ecc" --no-systemd
+      - name: Native installer skips an old default python3 (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p "$RUNNER_TEMP/old-python"
+          printf '#!/bin/sh\necho "Python 3.9.6"\nexit 1\n' > "$RUNNER_TEMP/old-python/python3"
+          chmod +x "$RUNNER_TEMP/old-python/python3"
+          PATH="$RUNNER_TEMP/old-python:$PATH" \
+            sh deploy/native/install.sh --prefix "$RUNNER_TEMP/ecc-old-python" --no-systemd
       - name: CMake build
         run: |
           cmake -S worker -B "$RUNNER_TEMP/build"

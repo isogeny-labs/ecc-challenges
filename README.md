@@ -219,3 +219,7 @@ The original campaign table stays in its own account, and this service never
 writes to it. Until its points are imported and backmatched, collision lookup
 covers new public candidates only. The paper's quantitative claims go through
 the paper's separate evidence and submission process.
+
+## Licence
+
+MIT, see [LICENSE](LICENSE). To report a vulnerability or abuse of the service, and for the acceptable-use policy, see [SECURITY.md](SECURITY.md).
