@@ -325,11 +325,13 @@ def create_app(settings: Settings | None = None, *, db=None, storage=None) -> Fa
         except Exception:
             LOG.exception("leaderboard failed")
             board = None
+        open_challenges = [c for c in CHALLENGES if not c.solved_in_2009]
         return TEMPLATES.TemplateResponse(request, "leaderboard.html",
                                           {"board": board,
                                            "names": {challenge.id: challenge.public()["name"]
                                                      for challenge in CHALLENGES},
-                                           "open_total": sum(not c.solved_in_2009 for c in CHALLENGES)},
+                                           "open_ids": [c.id for c in open_challenges],
+                                           "open_total": len(open_challenges)},
                                           headers={"Cache-Control": "public, max-age=60"})
 
     @app.get("/pollard-rho", response_class=HTMLResponse)

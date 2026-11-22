@@ -9,6 +9,7 @@ a terminal without a browser session. No endpoint returns another key's secret.
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal
 import json
 from uuid import UUID
 
@@ -82,6 +83,9 @@ def _jsonable(value):
         return value.isoformat()
     if isinstance(value, UUID):
         return str(value)
+    if isinstance(value, Decimal):
+        # Points and byte counters are summed by PostgreSQL as NUMERIC.
+        return int(value) if value == value.to_integral_value() else float(value)
     if isinstance(value, dict):
         return {key: _jsonable(item) for key, item in value.items()}
     if isinstance(value, (list, tuple)):
